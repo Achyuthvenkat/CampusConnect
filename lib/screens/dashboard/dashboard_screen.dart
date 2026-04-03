@@ -162,7 +162,7 @@ class _JobStatusCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(Icons.attach_money,
+                  const Icon(Icons.attach_money,
                       size: 16, color: AppTheme.successColor),
                   Text(
                     Helpers.formatCurrency(job.budget),

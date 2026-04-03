@@ -197,5 +197,3 @@ class _CreateJobScreenState extends State<CreateJobScreen> {
     );
   }
 }
-
-
