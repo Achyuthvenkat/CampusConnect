@@ -1,1 +1,41 @@
-Build a College Freelancing Marketplace mobile application using Flutter and Firebase where students can sign up/login using college email authentication (Firebase Auth), create profiles with skills, pricing, availability, and portfolio (images/videos stored in Firebase Storage), and act as both service providers and clients; implement features including skill listing and categorized search with filters (price, rating, category), job posting and bidding system, detailed user profiles with ratings and reviews, real-time in-app chat using Firestore, push notifications via Firebase Cloud Messaging, bookmark/save freelancers, and a dashboard to manage gigs and requests, with all data (users, jobs, messages, reviews) stored in Firestore, ensuring a clean UI/UX, secure authentication, and smooth real-time updates to enable students within the same college to easily find, hire, and collaborate on freelance work.
+# CampusConnect - College Freelancing Marketplace
+
+A Flutter mobile application connecting college students for freelancing opportunities.
+
+## Features
+
+- 🔐 **Authentication** - College email (.edu) registration & login with Firebase Auth
+- 👤 **Profiles** - Skills, hourly rates, portfolio, availability status
+- 💼 **Jobs** - Post jobs, browse by category, filter by budget
+- 💰 **Bidding** - Submit bids with proposals, accept/reject bids
+- 💬 **Real-time Chat** - Direct messaging between clients and freelancers
+- 🔔 **Push Notifications** - Firebase Cloud Messaging
+- 🔖 **Bookmarks** - Save freelancers for later
+- 📊 **Dashboard** - Manage posted jobs and submitted bids
+- ⭐ **Reviews** - Rate and review after job completion
+
+## Getting Started
+
+### Setup
+
+1. **Install dependencies**: `flutter pub get`
+2. **Configure Firebase**:
+   ```bash
+   dart pub global activate flutterfire_cli
+   flutterfire configure
+   ```
+3. Enable Email/Password auth, Firestore, Storage, and FCM in Firebase Console
+4. **Run**: `flutter run`
+
+### Required Firestore Indexes
+
+- `jobs`: `status` ASC, `createdAt` DESC
+- `jobs`: `clientId` ASC, `createdAt` DESC
+- `bids`: `jobId` ASC, `createdAt` DESC
+- `chatRooms`: `participantIds` array-contains, `lastMessageTime` DESC
+
+## Architecture
+
+- **State**: Provider pattern
+- **Backend**: Firebase (Auth, Firestore, Storage, FCM)
+- **UI**: Material Design 3 with custom theme
