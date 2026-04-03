@@ -3,12 +3,15 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/job_model.dart';
 import '../../models/bid_model.dart';
+import '../../models/review_model.dart';
 import '../../providers/auth_provider.dart' as app_auth;
 import '../../providers/user_provider.dart';
 import '../../providers/jobs_provider.dart';
 import '../../providers/chat_provider.dart';
+import '../../services/firestore_service.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
+import '../../widgets/rating_bar.dart';
 import '../chat/chat_screen.dart';
 import 'bids_screen.dart';
 
@@ -205,7 +208,10 @@ class JobDetailScreen extends StatelessWidget {
                   if (confirm == true && context.mounted) {
                     await context
                         .read<JobsProvider>()
-                        .completeJob(job.id);
+                        .completeJob(job.id, job.assignedFreelancerId);
+                    if (context.mounted && job.assignedFreelancerId != null) {
+                      await _showReviewDialog(context, job);
+                    }
                     if (context.mounted) Navigator.pop(context);
                   }
                 },
@@ -216,6 +222,87 @@ class JobDetailScreen extends StatelessWidget {
                 child: const Text('Mark as Complete'),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Shows a dialog for the client to rate and review the freelancer after
+  /// marking the job as complete.
+  Future<void> _showReviewDialog(
+      BuildContext context, JobModel completedJob) async {
+    double rating = 5;
+    final commentCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Rate the Freelancer'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('How was your experience?'),
+                const SizedBox(height: 16),
+                AppRatingBar(
+                  initialRating: rating,
+                  onRatingUpdate: (r) => setDialogState(() => rating = r),
+                  itemSize: 36,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: commentCtrl,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Leave a comment (optional)',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Skip'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (!ctx.mounted) return;
+                final userProvider = context.read<UserProvider>();
+                final authProvider =
+                    context.read<app_auth.AuthProvider>();
+                final reviewer = userProvider.user;
+                final reviewerId =
+                    authProvider.currentUser?.uid ?? '';
+                if (reviewer == null ||
+                    completedJob.assignedFreelancerId == null) {
+                  Navigator.pop(ctx);
+                  return;
+                }
+                final review = ReviewModel(
+                  id: '',
+                  reviewerId: reviewerId,
+                  reviewerName: reviewer.name,
+                  reviewerPhotoUrl: reviewer.photoUrl,
+                  revieweeId: completedJob.assignedFreelancerId!,
+                  jobId: completedJob.id,
+                  jobTitle: completedJob.title,
+                  rating: rating,
+                  comment: commentCtrl.text.trim().isEmpty
+                      ? 'Great work!'
+                      : commentCtrl.text.trim(),
+                  createdAt: DateTime.now(),
+                );
+                await FirestoreService().addReview(review);
+                commentCtrl.dispose();
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              child: const Text('Submit'),
+            ),
           ],
         ),
       ),

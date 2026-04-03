@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
@@ -8,6 +9,9 @@ import '../services/storage_service.dart';
 class UserProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
   final StorageService _storageService = StorageService();
+
+  StreamSubscription<UserModel?>? _userSubscription;
+  StreamSubscription<List<ReviewModel>>? _reviewsSubscription;
 
   UserModel? _user;
   List<ReviewModel> _reviews = [];
@@ -20,7 +24,8 @@ class UserProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   void listenToUser(String uid) {
-    _firestoreService.userStream(uid).listen((user) {
+    _userSubscription?.cancel();
+    _userSubscription = _firestoreService.userStream(uid).listen((user) {
       _user = user;
       notifyListeners();
     });
@@ -39,7 +44,9 @@ class UserProvider with ChangeNotifier {
   }
 
   Future<void> loadReviews(String uid) async {
-    _firestoreService.getUserReviews(uid).listen((reviews) {
+    _reviewsSubscription?.cancel();
+    _reviewsSubscription =
+        _firestoreService.getUserReviews(uid).listen((reviews) {
       _reviews = reviews;
       notifyListeners();
     });
@@ -125,5 +132,12 @@ class UserProvider with ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _userSubscription?.cancel();
+    _reviewsSubscription?.cancel();
+    super.dispose();
   }
 }

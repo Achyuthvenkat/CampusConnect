@@ -10,6 +10,7 @@ import '../../models/job_model.dart';
 import '../../widgets/job_card.dart';
 import '../jobs/job_detail_screen.dart';
 import '../jobs/create_job_screen.dart';
+import '../jobs/jobs_list_screen.dart';
 import '../search/search_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -122,7 +123,11 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const JobsListScreen()),
+                    ),
                     child: const Text('See All'),
                   ),
                 ],

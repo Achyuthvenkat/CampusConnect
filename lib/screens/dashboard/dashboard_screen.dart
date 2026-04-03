@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart' as app_auth;
-import '../../providers/user_provider.dart';
 import '../../providers/jobs_provider.dart';
 import '../../models/job_model.dart';
 import '../../models/bid_model.dart';
@@ -15,12 +13,10 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
     final jobsProvider = context.watch<JobsProvider>();
-    final user = userProvider.user;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Dashboard'),
@@ -29,7 +25,8 @@ class DashboardScreen extends StatelessWidget {
             unselectedLabelColor: Colors.white70,
             indicatorColor: Colors.white,
             tabs: [
-              Tab(text: 'My Posted Jobs'),
+              Tab(text: 'Posted Jobs'),
+              Tab(text: 'Active Work'),
               Tab(text: 'My Bids'),
             ],
           ),
@@ -37,6 +34,7 @@ class DashboardScreen extends StatelessWidget {
         body: TabBarView(
           children: [
             _PostedJobsTab(jobs: jobsProvider.myPostedJobs),
+            _AssignedJobsTab(jobs: jobsProvider.myAssignedJobs),
             _MyBidsTab(bids: jobsProvider.myBids),
           ],
         ),
@@ -196,6 +194,42 @@ class _JobStatusCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AssignedJobsTab extends StatelessWidget {
+  final List<JobModel> jobs;
+  const _AssignedJobsTab({required this.jobs});
+
+  @override
+  Widget build(BuildContext context) {
+    if (jobs.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_outlined,
+                size: 64, color: AppTheme.textSecondary),
+            SizedBox(height: 16),
+            Text(
+              'No active work',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Jobs you\'ve been hired for will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: jobs.length,
+      itemBuilder: (_, i) => _JobStatusCard(job: jobs[i]),
     );
   }
 }

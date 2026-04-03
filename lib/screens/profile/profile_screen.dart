@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,6 +7,7 @@ import '../../providers/user_provider.dart';
 import '../../providers/bookmarks_provider.dart';
 import '../../models/user_model.dart';
 import '../../models/review_model.dart';
+import '../../services/firestore_service.dart';
 import '../../utils/theme.dart';
 import '../../utils/helpers.dart';
 import '../../widgets/review_card.dart';
@@ -46,43 +48,68 @@ class _ProfileViewState extends State<_ProfileView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  // Used only when viewing another user's profile.
+  UserModel? _viewedUser;
+  List<ReviewModel> _viewedUserReviews = [];
+  StreamSubscription<List<ReviewModel>>? _reviewsSubscription;
+  bool _loadingViewedUser = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     if (!widget.isOwnProfile) {
-      context.read<UserProvider>().loadUser(widget.userId);
+      _loadViewedUser();
+    }
+  }
+
+  Future<void> _loadViewedUser() async {
+    if (!mounted) return;
+    setState(() => _loadingViewedUser = true);
+    try {
+      final firestoreService = FirestoreService();
+      final user = await firestoreService.getUser(widget.userId);
+      if (mounted) setState(() => _viewedUser = user);
+
+      _reviewsSubscription?.cancel();
+      _reviewsSubscription =
+          firestoreService.getUserReviews(widget.userId).listen((reviews) {
+        if (mounted) setState(() => _viewedUserReviews = reviews);
+      });
+    } finally {
+      if (mounted) setState(() => _loadingViewedUser = false);
     }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _reviewsSubscription?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
-    final user = widget.isOwnProfile
-        ? userProvider.user
-        : null; // For other users, we'd need a separate load
+    final user =
+        widget.isOwnProfile ? userProvider.user : _viewedUser;
+    final reviews =
+        widget.isOwnProfile ? userProvider.reviews : _viewedUserReviews;
 
-    if (user == null && widget.isOwnProfile) {
+    if (user == null) {
+      if (_loadingViewedUser || (widget.isOwnProfile && userProvider.isLoading)) {
+        return const Scaffold(
+            body: Center(child: CircularProgressIndicator()));
+      }
       return const Scaffold(
-          body: Center(child: CircularProgressIndicator()));
+          body: Center(child: Text('User not found')));
     }
 
-    return _buildProfile(context, user, userProvider);
+    return _buildProfile(context, user, reviews);
   }
 
   Widget _buildProfile(
-      BuildContext context, UserModel? user, UserProvider userProvider) {
-    if (user == null) {
-      return const Scaffold(
-          body: Center(child: CircularProgressIndicator()));
-    }
-
+      BuildContext context, UserModel user, List<ReviewModel> reviews) {
     final bookmarksProvider = context.watch<BookmarksProvider>();
     final authProvider = context.read<app_auth.AuthProvider>();
     final currentUserId = authProvider.currentUser?.uid ?? '';
@@ -198,7 +225,7 @@ class _ProfileViewState extends State<_ProfileView>
           children: [
             _AboutTab(user: user),
             PortfolioScreen(user: user, isOwnProfile: widget.isOwnProfile),
-            _ReviewsTab(reviews: userProvider.reviews),
+            _ReviewsTab(reviews: reviews),
           ],
         ),
       ),

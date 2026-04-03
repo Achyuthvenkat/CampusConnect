@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
@@ -5,6 +6,8 @@ import '../services/firestore_service.dart';
 
 class ChatProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
+
+  StreamSubscription<List<ChatRoomModel>>? _chatRoomsSubscription;
 
   List<ChatRoomModel> _chatRooms = [];
   bool _isLoading = false;
@@ -15,7 +18,9 @@ class ChatProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   void listenToChatRooms(String userId) {
-    _firestoreService.getChatRooms(userId).listen((rooms) {
+    _chatRoomsSubscription?.cancel();
+    _chatRoomsSubscription =
+        _firestoreService.getChatRooms(userId).listen((rooms) {
       _chatRooms = rooms;
       notifyListeners();
     });
@@ -76,5 +81,11 @@ class ChatProvider with ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _chatRoomsSubscription?.cancel();
+    super.dispose();
   }
 }

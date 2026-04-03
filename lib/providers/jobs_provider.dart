@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/job_model.dart';
 import '../models/bid_model.dart';
@@ -5,6 +6,11 @@ import '../services/firestore_service.dart';
 
 class JobsProvider with ChangeNotifier {
   final FirestoreService _firestoreService = FirestoreService();
+
+  StreamSubscription<List<JobModel>>? _jobsSubscription;
+  StreamSubscription<List<JobModel>>? _postedJobsSubscription;
+  StreamSubscription<List<JobModel>>? _assignedJobsSubscription;
+  StreamSubscription<List<BidModel>>? _bidsSubscription;
 
   List<JobModel> _jobs = [];
   List<JobModel> _myPostedJobs = [];
@@ -29,7 +35,8 @@ class JobsProvider with ChangeNotifier {
   String get searchQuery => _searchQuery;
 
   void listenToJobs() {
-    _firestoreService
+    _jobsSubscription?.cancel();
+    _jobsSubscription = _firestoreService
         .getJobsStream(
           category: _selectedCategory,
           maxBudget: _maxBudget,
@@ -43,15 +50,22 @@ class JobsProvider with ChangeNotifier {
   }
 
   void listenToUserJobs(String userId) {
-    _firestoreService.getUserJobs(userId).listen((jobs) {
+    _postedJobsSubscription?.cancel();
+    _assignedJobsSubscription?.cancel();
+    _bidsSubscription?.cancel();
+
+    _postedJobsSubscription =
+        _firestoreService.getUserJobs(userId).listen((jobs) {
       _myPostedJobs = jobs;
       notifyListeners();
     });
-    _firestoreService.getFreelancerJobs(userId).listen((jobs) {
+    _assignedJobsSubscription =
+        _firestoreService.getFreelancerJobs(userId).listen((jobs) {
       _myAssignedJobs = jobs;
       notifyListeners();
     });
-    _firestoreService.getFreelancerBids(userId).listen((bids) {
+    _bidsSubscription =
+        _firestoreService.getFreelancerBids(userId).listen((bids) {
       _myBids = bids;
       notifyListeners();
     });
@@ -141,10 +155,10 @@ class JobsProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> completeJob(String jobId) async {
+  Future<bool> completeJob(String jobId, String? assignedFreelancerId) async {
     _setLoading(true);
     try {
-      await _firestoreService.updateJob(jobId, {'status': 'completed'});
+      await _firestoreService.completeJob(jobId, assignedFreelancerId);
       return true;
     } catch (e) {
       _errorMessage = e.toString();
@@ -161,5 +175,14 @@ class JobsProvider with ChangeNotifier {
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _jobsSubscription?.cancel();
+    _postedJobsSubscription?.cancel();
+    _assignedJobsSubscription?.cancel();
+    _bidsSubscription?.cancel();
+    super.dispose();
   }
 }

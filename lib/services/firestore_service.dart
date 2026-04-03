@@ -100,6 +100,21 @@ class FirestoreService {
     await _firestore.collection('jobs').doc(jobId).update(data);
   }
 
+  /// Marks the job as completed and increments the assigned freelancer's
+  /// completedJobs counter atomically.
+  Future<void> completeJob(String jobId, String? assignedFreelancerId) async {
+    final batch = _firestore.batch();
+    batch.update(_firestore.collection('jobs').doc(jobId), {
+      'status': 'completed',
+    });
+    if (assignedFreelancerId != null && assignedFreelancerId.isNotEmpty) {
+      batch.update(_firestore.collection('users').doc(assignedFreelancerId), {
+        'completedJobs': FieldValue.increment(1),
+      });
+    }
+    await batch.commit();
+  }
+
   // ── Bids ─────────────────────────────────────────────────────────────────
 
   Future<void> createBid(BidModel bid) async {
@@ -266,17 +281,20 @@ class FirestoreService {
 
   Future<void> markMessagesAsRead(
       String chatRoomId, String userId) async {
+    // Query only by isRead to avoid requiring a composite Firestore index;
+    // filter by senderId client-side.
     final messages = await _firestore
         .collection('chatRooms')
         .doc(chatRoomId)
         .collection('messages')
         .where('isRead', isEqualTo: false)
-        .where('senderId', isNotEqualTo: userId)
         .get();
 
     final batch = _firestore.batch();
     for (final doc in messages.docs) {
-      batch.update(doc.reference, {'isRead': true});
+      if (doc.data()['senderId'] != userId) {
+        batch.update(doc.reference, {'isRead': true});
+      }
     }
     batch.update(
       _firestore.collection('chatRooms').doc(chatRoomId),
@@ -348,5 +366,31 @@ class FirestoreService {
     }
 
     return users;
+  }
+
+  /// Searches open jobs by title, description, or category (client-side
+  /// filtering after fetching all open jobs ordered by creation date).
+  Future<List<JobModel>> searchJobs({String? query}) async {
+    final snapshot = await _firestore
+        .collection('jobs')
+        .where('status', isEqualTo: 'open')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    var jobs = snapshot.docs
+        .map((doc) => JobModel.fromMap(doc.data(), doc.id))
+        .toList();
+
+    if (query != null && query.isNotEmpty) {
+      final q = query.toLowerCase();
+      jobs = jobs
+          .where((j) =>
+              j.title.toLowerCase().contains(q) ||
+              j.description.toLowerCase().contains(q) ||
+              j.category.toLowerCase().contains(q))
+          .toList();
+    }
+
+    return jobs;
   }
 }

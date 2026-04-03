@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/user_model.dart';
+import '../../models/job_model.dart';
 import '../../providers/auth_provider.dart' as app_auth;
-import '../../providers/user_provider.dart';
 import '../../providers/bookmarks_provider.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/constants.dart';
@@ -11,7 +11,6 @@ import '../../widgets/freelancer_card.dart';
 import '../../widgets/job_card.dart';
 import '../profile/profile_screen.dart';
 import '../jobs/job_detail_screen.dart';
-import '../../models/job_model.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -26,17 +25,27 @@ class _SearchScreenState extends State<SearchScreen>
   final _searchCtrl = TextEditingController();
   final FirestoreService _firestoreService = FirestoreService();
 
+  // Freelancer search state
   List<UserModel> _freelancers = [];
-  bool _isLoading = false;
+  bool _isLoadingFreelancers = false;
   String _selectedSkill = '';
   double? _maxRate;
   double? _minRating;
+
+  // Job search state
+  List<JobModel> _jobResults = [];
+  bool _isLoadingJobs = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _searchFreelancers();
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        _runSearch();
+      }
+    });
+    _runSearch();
   }
 
   @override
@@ -46,8 +55,16 @@ class _SearchScreenState extends State<SearchScreen>
     super.dispose();
   }
 
+  Future<void> _runSearch() async {
+    if (_tabController.index == 0) {
+      await _searchFreelancers();
+    } else {
+      await _searchJobs();
+    }
+  }
+
   Future<void> _searchFreelancers() async {
-    setState(() => _isLoading = true);
+    setState(() => _isLoadingFreelancers = true);
     try {
       final results = await _firestoreService.searchFreelancers(
         skill: _selectedSkill.isEmpty ? null : _selectedSkill,
@@ -55,11 +72,22 @@ class _SearchScreenState extends State<SearchScreen>
         minRating: _minRating,
         query: _searchCtrl.text.trim(),
       );
-      setState(() => _freelancers = results);
-    } catch (e) {
-      // Handle error silently.
+      if (mounted) setState(() => _freelancers = results);
+    } catch (_) {
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoadingFreelancers = false);
+    }
+  }
+
+  Future<void> _searchJobs() async {
+    setState(() => _isLoadingJobs = true);
+    try {
+      final query = _searchCtrl.text.trim().toLowerCase();
+      final snapshot = await _firestoreService.searchJobs(query: query);
+      if (mounted) setState(() => _jobResults = snapshot);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _isLoadingJobs = false);
     }
   }
 
@@ -126,14 +154,14 @@ class _SearchScreenState extends State<SearchScreen>
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _searchCtrl.clear();
-                          _searchFreelancers();
+                          _runSearch();
                         },
                       )
                     : null,
               ),
-              onSubmitted: (_) => _searchFreelancers(),
+              onSubmitted: (_) => _runSearch(),
               onChanged: (v) {
-                if (v.isEmpty) _searchFreelancers();
+                if (v.isEmpty) _runSearch();
               },
               textInputAction: TextInputAction.search,
             ),
@@ -142,7 +170,8 @@ class _SearchScreenState extends State<SearchScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _isLoading
+                // Freelancers tab
+                _isLoadingFreelancers
                     ? const Center(child: CircularProgressIndicator())
                     : _freelancers.isEmpty
                         ? const Center(
@@ -173,26 +202,36 @@ class _SearchScreenState extends State<SearchScreen>
                               );
                             },
                           ),
-                const _JobSearchTab(),
+                // Jobs tab
+                _isLoadingJobs
+                    ? const Center(child: CircularProgressIndicator())
+                    : _jobResults.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No jobs found',
+                              style:
+                                  TextStyle(color: AppTheme.textSecondary),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _jobResults.length,
+                            itemBuilder: (_, i) => JobCard(
+                              job: _jobResults[i],
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => JobDetailScreen(
+                                    jobId: _jobResults[i].id,
+                                    job: _jobResults[i],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _JobSearchTab extends StatelessWidget {
-  const _JobSearchTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        'Use the Jobs tab to browse and filter jobs',
-        style: TextStyle(color: AppTheme.textSecondary),
-        textAlign: TextAlign.center,
       ),
     );
   }
