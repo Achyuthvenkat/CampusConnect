@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "742784357743",
+    "firebase_url": "https://campus-connect-a6aa5-default-rtdb.firebaseio.com",
+    "project_id": "campus-connect-a6aa5",
+    "storage_bucket": "campus-connect-a6aa5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:742784357743:android:671d51ff0551ecf380449a",
+        "android_client_info": {
+          "package_name": "com.campusconnect.campus_connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALe66hmaOIqX4L2Ij1zgVpUXYBSCbjEZc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:742784357743:android:abd9b03e877ede9d80449a",
+        "android_client_info": {
+          "package_name": "com.saveetha.campus_connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALe66hmaOIqX4L2Ij1zgVpUXYBSCbjEZc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

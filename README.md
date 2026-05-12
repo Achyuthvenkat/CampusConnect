@@ -1,1 +1,17 @@
-Build a College Freelancing Marketplace mobile application using Flutter and Firebase where students can sign up/login using college email authentication (Firebase Auth), create profiles with skills, pricing, availability, and portfolio (images/videos stored in Firebase Storage), and act as both service providers and clients; implement features including skill listing and categorized search with filters (price, rating, category), job posting and bidding system, detailed user profiles with ratings and reviews, real-time in-app chat using Firestore, push notifications via Firebase Cloud Messaging, bookmark/save freelancers, and a dashboard to manage gigs and requests, with all data (users, jobs, messages, reviews) stored in Firestore, ensuring a clean UI/UX, secure authentication, and smooth real-time updates to enable students within the same college to easily find, hire, and collaborate on freelance work.
+# campus_connect
+
+A new Flutter project.
+
+## Getting Started
+
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
