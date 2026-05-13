@@ -14,6 +14,7 @@ class UserModel extends Equatable {
   final double hourlyRate;
   final bool availability;
   final List<String> portfolioUrls;
+  final List<String> externalLinks;
   final double rating;
   final int reviewCount;
   final List<String> bookmarks;
@@ -33,6 +34,7 @@ class UserModel extends Equatable {
     this.hourlyRate = 0,
     this.availability = true,
     this.portfolioUrls = const [],
+    this.externalLinks = const [],
     this.rating = 0.0,
     this.reviewCount = 0,
     this.bookmarks = const [],
@@ -55,6 +57,7 @@ class UserModel extends Equatable {
       hourlyRate: (data['hourlyRate'] ?? 0).toDouble(),
       availability: data['availability'] ?? true,
       portfolioUrls: List<String>.from(data['portfolioUrls'] ?? []),
+      externalLinks: List<String>.from(data['externalLinks'] ?? []),
       rating: (data['rating'] ?? 0.0).toDouble(),
       reviewCount: data['reviewCount'] ?? 0,
       bookmarks: List<String>.from(data['bookmarks'] ?? []),
@@ -77,6 +80,7 @@ class UserModel extends Equatable {
       'hourlyRate': hourlyRate,
       'availability': availability,
       'portfolioUrls': portfolioUrls,
+      'externalLinks': externalLinks,
       'rating': rating,
       'reviewCount': reviewCount,
       'bookmarks': bookmarks,
@@ -95,6 +99,7 @@ class UserModel extends Equatable {
     double? hourlyRate,
     bool? availability,
     List<String>? portfolioUrls,
+    List<String>? externalLinks,
     double? rating,
     int? reviewCount,
     List<String>? bookmarks,
@@ -113,6 +118,7 @@ class UserModel extends Equatable {
       hourlyRate: hourlyRate ?? this.hourlyRate,
       availability: availability ?? this.availability,
       portfolioUrls: portfolioUrls ?? this.portfolioUrls,
+      externalLinks: externalLinks ?? this.externalLinks,
       rating: rating ?? this.rating,
       reviewCount: reviewCount ?? this.reviewCount,
       bookmarks: bookmarks ?? this.bookmarks,
@@ -126,5 +132,5 @@ class UserModel extends Equatable {
   bool get isProfileComplete => bio.isNotEmpty && skills.isNotEmpty;
 
   @override
-  List<Object?> get props => [uid, name, email, skills, rating, availability];
+  List<Object?> get props => [uid, name, email, skills, rating, availability, portfolioUrls, externalLinks];
 }

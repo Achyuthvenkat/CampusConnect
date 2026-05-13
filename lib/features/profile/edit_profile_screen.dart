@@ -34,6 +34,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _bioController = TextEditingController();
   final _deptController = TextEditingController();
   final _rateController = TextEditingController();
+  final _linkController = TextEditingController();
 
   int _year = 1;
   bool _availability = true;
@@ -41,6 +42,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   File? _newAvatarFile;
   String? _currentAvatarUrl;
   List<String> _portfolioUrls = [];
+  List<String> _externalLinks = [];
   List<File> _newPortfolioFiles = [];
   bool _isLoading = false;
   bool _initialized = false;
@@ -51,6 +53,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _bioController.dispose();
     _deptController.dispose();
     _rateController.dispose();
+    _linkController.dispose();
     super.dispose();
   }
 
@@ -67,6 +70,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _selectedSkills = List<String>.from(user.skills);
     _currentAvatarUrl = user.avatarUrl;
     _portfolioUrls = List<String>.from(user.portfolioUrls);
+    _externalLinks = List.from(user.externalLinks);
   }
 
   Future<void> _save() async {
@@ -90,6 +94,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
       final allPortfolioUrls = [..._portfolioUrls, ...newUrls];
 
+      // Auto-add pending link if exists
+      final pendingLink = _linkController.text.trim();
+      if (pendingLink.isNotEmpty && !_externalLinks.contains(pendingLink)) {
+        _externalLinks.add(pendingLink);
+      }
+
       await firestoreService.updateUser(uid, {
         'name': _nameController.text.trim(),
         'bio': _bioController.text.trim(),
@@ -100,6 +110,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'availability': _availability,
         'avatarUrl': avatarUrl,
         'portfolioUrls': allPortfolioUrls,
+        'externalLinks': _externalLinks,
       });
 
       if (mounted) {
@@ -307,6 +318,83 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 );
               }).toList(),
             ),
+            const SizedBox(height: 20),
+            
+            // External Links
+            const Text('Portfolio & Social Links',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomTextField(
+                    label: 'Add Link (GitHub, Behance, etc.)',
+                    controller: _linkController,
+                    prefixIcon: Icons.link,
+                    onChanged: (v) => setState(() {}),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filled(
+                  onPressed: _linkController.text.isEmpty
+                      ? null
+                      : () {
+                          final link = _linkController.text.trim();
+                          if (link.isNotEmpty && !_externalLinks.contains(link)) {
+                            setState(() {
+                              _externalLinks.add(link);
+                              _linkController.clear();
+                            });
+                          }
+                        },
+                  icon: const Icon(Icons.add),
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_externalLinks.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _externalLinks.length,
+                itemBuilder: (context, index) {
+                  final link = _externalLinks[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.divider),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.link, size: 16, color: AppColors.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            link,
+                            style: const TextStyle(fontSize: 13),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => setState(() => _externalLinks.removeAt(index)),
+                          child: const Icon(Icons.delete_outline, size: 18, color: AppColors.error),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
             const SizedBox(height: 20),
 
             // Portfolio

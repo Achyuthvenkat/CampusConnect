@@ -14,6 +14,7 @@ import 'package:campus_connect/widgets/common/rating_bar_widget.dart';
 import 'package:campus_connect/widgets/cards/review_card.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:photo_view/photo_view_gallery.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final _profileUserProvider =
     StreamProvider.autoDispose.family<UserModel?, String>((ref, uid) {
@@ -247,6 +248,61 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
 
+              // Links
+              if (user.externalLinks.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                    child: _Section(
+                      title: 'Links',
+                      child: Column(
+                        children: user.externalLinks
+                            .map((link) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: InkWell(
+                                    onTap: () => _launchLink(link),
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                            color: AppColors.divider),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.link,
+                                              size: 18,
+                                              color: AppColors.primary),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              link,
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: AppColors.primary,
+                                                decoration:
+                                                    TextDecoration.underline,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const Icon(Icons.open_in_new,
+                                              size: 14,
+                                              color: AppColors.textHint),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                ),
+
               // Portfolio
               if (user.portfolioUrls.isNotEmpty)
                 SliverToBoxAdapter(
@@ -326,6 +382,21 @@ class ProfileScreen extends ConsumerWidget {
         builder: (_) => _PortfolioGallery(urls: urls, initialIndex: index),
       ),
     );
+  }
+
+  Future<void> _launchLink(String url) async {
+    String formattedUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      formattedUrl = 'https://$url';
+    }
+    final uri = Uri.parse(formattedUrl);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Could not launch $url: $e');
+    }
   }
 }
 

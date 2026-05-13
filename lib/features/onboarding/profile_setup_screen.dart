@@ -28,6 +28,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _bioController = TextEditingController();
   final _deptController = TextEditingController();
   final _rateController = TextEditingController();
+  final _linkController = TextEditingController();
 
   int _currentStep = 0;
   int _year = 1;
@@ -35,6 +36,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   bool _availability = true;
   File? _avatarFile;
   List<File> _portfolioFiles = [];
+  List<String> _externalLinks = [];
   List<String> _selectedSkills = [];
   String _userType = 'freelancer'; // 'freelancer', 'client', 'both'
 
@@ -43,6 +45,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
     _bioController.dispose();
     _deptController.dispose();
     _rateController.dispose();
+    _linkController.dispose();
     super.dispose();
   }
 
@@ -103,6 +106,7 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
         'availability': _availability,
         if (avatarUrl != null) 'avatarUrl': avatarUrl,
         'portfolioUrls': portfolioUrls,
+        'externalLinks': _externalLinks,
         'userType': _userType,
         'profileComplete': true,
       });
@@ -589,6 +593,85 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
               );
             },
           ),
+
+          const SizedBox(height: 24),
+          const Text('Portfolio & Social Links',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: CustomTextField(
+                  label: 'Add Link (GitHub, LinkedIn, etc.)',
+                  controller: _linkController,
+                  prefixIcon: Icons.link,
+                  onChanged: (v) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.filled(
+                onPressed: _linkController.text.isEmpty
+                    ? null
+                    : () {
+                        final link = _linkController.text.trim();
+                        if (link.isNotEmpty && !_externalLinks.contains(link)) {
+                          setState(() {
+                            _externalLinks.add(link);
+                            _linkController.clear();
+                          });
+                        }
+                      },
+                icon: const Icon(Icons.add),
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_externalLinks.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _externalLinks.length,
+              itemBuilder: (context, index) {
+                final link = _externalLinks[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.link, size: 16, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          link,
+                          style: const TextStyle(fontSize: 13),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () =>
+                            setState(() => _externalLinks.removeAt(index)),
+                        child: const Icon(Icons.delete_outline,
+                            size: 18, color: AppColors.error),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
 
           const SizedBox(height: 24),
 
