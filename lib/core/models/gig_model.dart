@@ -16,6 +16,9 @@ class GigModel extends Equatable {
   final List<String> tags;
   final int bidCount;
   final String? selectedBidId;
+  final String? deliveryMessage;
+  final List<String> deliveryUrls;
+  final String? revisionNotes;
   final DateTime createdAt;
 
   const GigModel({
@@ -33,6 +36,9 @@ class GigModel extends Equatable {
     this.tags = const [],
     this.bidCount = 0,
     this.selectedBidId,
+    this.deliveryMessage,
+    this.deliveryUrls = const [],
+    this.revisionNotes,
     required this.createdAt,
   });
 
@@ -54,6 +60,9 @@ class GigModel extends Equatable {
       tags: List<String>.from(data['tags'] ?? []),
       bidCount: data['bidCount'] ?? 0,
       selectedBidId: data['selectedBidId'],
+      deliveryMessage: data['deliveryMessage'],
+      deliveryUrls: List<String>.from(data['deliveryUrls'] ?? []),
+      revisionNotes: data['revisionNotes'],
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
@@ -73,6 +82,9 @@ class GigModel extends Equatable {
       'tags': tags,
       'bidCount': bidCount,
       'selectedBidId': selectedBidId,
+      'deliveryMessage': deliveryMessage,
+      'deliveryUrls': deliveryUrls,
+      'revisionNotes': revisionNotes,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -88,6 +100,9 @@ class GigModel extends Equatable {
     List<String>? tags,
     int? bidCount,
     String? selectedBidId,
+    String? deliveryMessage,
+    List<String>? deliveryUrls,
+    String? revisionNotes,
   }) {
     return GigModel(
       id: id,
@@ -104,12 +119,17 @@ class GigModel extends Equatable {
       tags: tags ?? this.tags,
       bidCount: bidCount ?? this.bidCount,
       selectedBidId: selectedBidId ?? this.selectedBidId,
+      deliveryMessage: deliveryMessage ?? this.deliveryMessage,
+      deliveryUrls: deliveryUrls ?? this.deliveryUrls,
+      revisionNotes: revisionNotes ?? this.revisionNotes,
       createdAt: createdAt,
     );
   }
 
   bool get isOpen => status == 'open';
   bool get isInProgress => status == 'in-progress';
+  bool get isInReview => status == 'in-review';
+  bool get isRevisionRequested => status == 'revision-requested';
   bool get isCompleted => status == 'completed';
   int get daysLeft => deadline.difference(DateTime.now()).inDays;
 

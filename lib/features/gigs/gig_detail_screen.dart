@@ -13,6 +13,7 @@ import 'package:campus_connect/widgets/common/custom_button.dart';
 import 'package:campus_connect/widgets/common/rating_bar_widget.dart';
 import 'package:campus_connect/features/gigs/bid_sheet.dart';
 import 'package:campus_connect/widgets/common/skill_chip.dart';
+import 'package:campus_connect/features/gigs/delivery_section.dart';
 
 final _gigDetailProvider = FutureProvider.autoDispose
     .family<GigModel?, String>((ref, gigId) async {
@@ -56,6 +57,10 @@ class GigDetailScreen extends ConsumerWidget {
           final isOwner = gig.clientId == uid;
           final isOpen = gig.isOpen;
           final statusColor = AppHelpers.getStatusColor(gig.status);
+
+          final bids = bidsAsync.maybeWhen(data: (d) => d, orElse: () => <BidModel>[]);
+          final winningBid = bids.where((b) => b.id == gig.selectedBidId).firstOrNull;
+          final isWinner = winningBid?.bidderId == uid;
 
           return CustomScrollView(
             slivers: [
@@ -186,6 +191,8 @@ class GigDetailScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+
+              DeliverySection(gig: gig, isOwner: isOwner, isWinner: isWinner),
 
               // Description
               SliverToBoxAdapter(

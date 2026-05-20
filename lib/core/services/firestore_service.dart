@@ -213,6 +213,21 @@ class FirestoreService {
     await _db.collection(FirestorePaths.gigs).doc(gigId).update(data);
   }
 
+  Future<void> submitDelivery(String gigId, String message, List<String> urls) async {
+    await _db.collection(FirestorePaths.gigs).doc(gigId).update({
+      'status': 'in-review',
+      'deliveryMessage': message,
+      'deliveryUrls': urls,
+    });
+  }
+
+  Future<void> requestRevision(String gigId, String notes) async {
+    await _db.collection(FirestorePaths.gigs).doc(gigId).update({
+      'status': 'revision-requested',
+      'revisionNotes': notes,
+    });
+  }
+
   Future<void> deleteGig(String gigId) async {
     await _db.collection(FirestorePaths.gigs).doc(gigId).delete();
   }
